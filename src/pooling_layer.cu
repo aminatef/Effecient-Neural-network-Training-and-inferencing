@@ -1,3 +1,4 @@
+#include "../include/pooling_layer.cuh"
 template<typename Dtype>
 __global__ void maxPooling_forward_kernel(int numElements,
         int in_h,int in_w,int in_c,
@@ -21,7 +22,7 @@ __global__ void maxPooling_forward_kernel(int numElements,
     threadIndex/=out_c;
     int b = threadIndex;
 
-    int out_idx = j + w*(i+k*h+h*out_c*b);
+    int out_idx = j + out_w*(i+k*out_h+out_h*out_c*b);
     Dtype max = -INFINITY;
     int max_idx =-1;
     for(int x=0;x<pooling_size;x++){
@@ -31,13 +32,10 @@ __global__ void maxPooling_forward_kernel(int numElements,
             int index = (height+in_c*in_h+in_h*in_c*b)*in_w + width;
             bool cond = height>=0 && height<in_h && width>=0 && width<in_w;
             Dtype val = (cond)? input[index] : -INFINITY;
-            max_idx = (val>max) index:max_idx;
-            max = (val>max) val:max;
+            max_idx = (val>max) ?index:max_idx;
+            max = (val>max) ?val:max;
         }   
     }
     output[out_idx] = max;
     indexes[out_idx] = max_idx;
-}
-__global__ void maxPooling_GPU(){
-
 }
