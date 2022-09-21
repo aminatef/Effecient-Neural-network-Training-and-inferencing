@@ -1,22 +1,13 @@
-#include "../include/DataTensor.hpp"
-#include"../include/MemManager.cuh"
 #include <vector>
 #include <memory>
+#include "../include/DataTensor.hpp"
 using std::vector;
 using std::shared_ptr;
 namespace DNN_FrameWork
 {
-    template <typename Dtype>
-    DataTensor<Dtype>::DataTensor(const int num, const int channels,
-                                  const int height, const int width)
-    {
-        count = num*channels*height*width;
-        reshape(num,channels,height,width);
-    }
     
-    template <typename Dtype>
-    void DataTensor<Dtype>::reshape(const int num, const int channels,
-                                    const int height, const int width) 
+    void DataTensor::reshape( int num,  int channels,
+                                     int height,  int width) 
     {
         shape[0]=num;
         shape[1]=channels;
@@ -25,8 +16,7 @@ namespace DNN_FrameWork
         reshape(shape);
     }
 
-    template <typename Dtype>
-    void DataTensor<Dtype>::reshape(vector<int> newShape)
+    void DataTensor::reshape(vector<int> newShape)
     {
         int newCount = 1;
         shape.resize(newShape.size());
@@ -36,19 +26,19 @@ namespace DNN_FrameWork
         }
         if(newCount>count){
             count = newCount;
-            data.reset(new MemManager(newCount*(sizeof(Dtype))));
-            diff.reset(new MemManager(newCount*(sizeof(Dtype))));
+            data_.reset(new MemManager(newCount*(sizeof(float))));
+            diff_.reset(new MemManager(newCount*(sizeof(float))));
         }
     }
 
-    template <typename Dtype>
-    void DataTensor<Dtype>::reshapeLike(DataTensor<Dtype> data)
+    
+    void DataTensor::reshapeLike(DataTensor data)
     {
         reshape(data.DataShape());
     }
 
-    template <typename Dtype>
-    int DataTensor<Dtype>::offset(vector<int> index)
+    
+    int DataTensor::offset(vector<int> index)
     {
         int offset=1;
         for(int i = 0;i<shape.size();i++){
@@ -58,8 +48,8 @@ namespace DNN_FrameWork
         return offset;
     }
 
-    template <typename Dtype>
-    int DataTensor<Dtype>::DataCount()
+    
+    int DataTensor::DataCount()
     {
         count = 1;
         for(int i =0;i<shape.size();i++){
@@ -67,10 +57,23 @@ namespace DNN_FrameWork
         }
         return count;
     }
+    int DataTensor::DataCount(int Start_axis,int end_axis)
+    {
+        count = 1;
+        for(int i =Start_axis;i<end_axis;i++){
+            count*=shape[i];
+        }
+        return count;
+    }
+
+    int DataTensor::DataCount(int Start_axis)
+    {
+        return DataCount(Start_axis,shape.size());
+    }
 
 
-    template <typename Dtype>
-    void DataTensor<Dtype>::copy_data(const DataTensor<Dtype> &data,bool copy_diff,bool reshape)
+    
+    void DataTensor::copy_data(DataTensor &data,bool copy_diff,bool reshape)
     {
         vector<int> dShape = data.DataShape();
         int dCount = data.DataCount();
@@ -79,95 +82,82 @@ namespace DNN_FrameWork
                 reshapeLike(data);
         }
         if(copy_diff){
-            MemManager::DNNcudaMemCpyDefault((Dtype*)diff->mutable_gpu_data(),
-                        count*(sizeof(Dtype)),data.gpu_diff());
-            
+            MemManager::DNNcudaMemCpyDefault((float*)diff_->mutable_gpu_data(),
+                        count*(sizeof(float)),(void *)data.gpu_diff());
         }else{
-            MemManager::DNNcudaMemCpyDefault((Dtype*)diff->mutable_gpu_data(),
-                        count*(sizeof(Dtype)),data.gpu_data());
+            MemManager::DNNcudaMemCpyDefault((float*)diff_->mutable_gpu_data(),
+                        count*(sizeof(float)),(void*)data.gpu_data());
         }
     }
 
-    template <typename Dtype>
-    const Dtype *DataTensor<Dtype>::gpu_data()
+    const float *DataTensor::gpu_data()
     {
-        return (const Dtype*)this->data->gpu_data();
+        return (const float*)this->data_->gpu_data();
     }
 
-    template <typename Dtype>
-    const Dtype *DataTensor<Dtype>::cpu_data()
+    
+    const float *DataTensor::cpu_data()
     {
-        return (const Dtype*)this->data->cpu_data();
+        return (const float*)this->data_->cpu_data();
     }
 
-    template <typename Dtype>
-    Dtype *DataTensor<Dtype>::mutable_gpu_data()
+    
+    float *DataTensor::mutable_gpu_data()
     {
-        return (Dtype*)this->data->mutable_gpu_data();
+        return (float*)this->data_->mutable_gpu_data();
     }
 
-    template <typename Dtype>
-    Dtype *DataTensor<Dtype>::mutable_cpu_data()
+    
+    float *DataTensor::mutable_cpu_data()
     {
-        return (Dtype*)this->data->mutable_cpu_data();
-    }
-
-
-
-    template <typename Dtype>
-    const Dtype *DataTensor<Dtype>::gpu_diff()
-    {
-        return (const Dtype*)this->diff->gpu_data();
-    }
-
-    template <typename Dtype>
-    const Dtype *DataTensor<Dtype>::cpu_diff()
-    {
-        return (const Dtype*)this->diff->cpu_data();
-    }
-
-    template <typename Dtype>
-    Dtype *DataTensor<Dtype>::mutable_gpu_diff()
-    {
-        return (Dtype*)this->diff->mutable_gpu_data();
-    }
-
-    template <typename Dtype>
-    Dtype *DataTensor<Dtype>::mutable_cpu_diff()
-    {
-        return (Dtype*)this->diff->mutable_cpu_data();
+        return (float*)this->data_->mutable_cpu_data();
     }
 
 
 
-
-
-
-
-
-
-
-
-    template <typename Dtype>
-    void DataTensor<Dtype>::set_cpu_data(Dtype *data)
+    
+    const float *DataTensor::gpu_diff()
     {
-        int dCount = data->DataCount();
-        if(dCount!=count){
-            data.reset(new MemManager(dCount*(sizeof(Dtype))));
-            diff.reset(new MemManager(dCount*(sizeof(Dtype))));
+        return (const float*)this->diff_->gpu_data();
+    }
+
+    
+    const float *DataTensor::cpu_diff()
+    {
+        return (const float*)this->diff_->cpu_data();
+    }
+
+    
+    float *DataTensor::mutable_gpu_diff()
+    {
+        return (float*)this->diff_->mutable_gpu_data();
+    }
+
+    
+    float *DataTensor::mutable_cpu_diff()
+    {
+        return (float*)this->diff_->mutable_cpu_data();
+    }
+
+    void DataTensor::set_cpu_data(float *data)
+    {
+        int size = count*sizeof(float);
+        if(data_->get_size()!=size){
+            data_.reset(new MemManager(size));
+            diff_.reset(new MemManager(size));
+        }
+        data_->set_cpu_data(data);
+    }
+
+    
+    void DataTensor::set_gpu_data(float *data)
+    {
+        int size = count*sizeof(float);
+        if(data_->get_size()!=size){
+            data_.reset(new MemManager(size));
+            diff_.reset(new MemManager(size));
         }   
-        data->set_cpu_data(data);
-    }
-
-    template <typename Dtype>
-    void DataTensor<Dtype>::set_gpu_data(Dtype *data)
-    {
-        int dCount = data->DataCount();
-        if(dCount!=count){
-            data.reset(new MemManager(dCount*(sizeof(Dtype))));
-            diff.reset(new MemManager(dCount*(sizeof(Dtype))));
-        }   
-        data->set_gpu_data(data);
+        data_->set_gpu_data(data);
     }
 
 }

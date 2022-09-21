@@ -11,7 +11,7 @@ CUDA_ROOT_DIR=/usr/local/cuda
 
 # CC compiler options:
 CC=g++
-CC_FLAGS=-g
+CC_FLAGS=-ldl -lrt 
 CC_LIBS=
 
 ##########################################################
@@ -20,15 +20,17 @@ CC_LIBS=
 
 # NVCC compiler options:
 NVCC=nvcc
-NVCC_FLAGS=
-NVCC_LIBS=
+NVCC_FLAGS=-lcublas -lcurand 
+NVCC_LIBS= -L$(CUDA_LIB)
 
 # CUDA library directory:
 CUDA_LIB_DIR= -L$(CUDA_ROOT_DIR)/lib64
+##
+CUDA_LIB= -L$(CUDA_ROOT_DIR)/targets/x86_64-linux/lib
 # CUDA include directory:
 CUDA_INC_DIR= -I$(CUDA_ROOT_DIR)/include
 # CUDA linking libraries:
-CUDA_LINK_LIBS= -lcudart
+CUDA_LINK_LIBS= -lcudart -lcublas -lcurand 
 
 ##########################################################
 
@@ -49,8 +51,8 @@ INC_DIR = include
 
 # Target executable name:
 EXE = run_test
-CXX_SRCS := MaxPooling.cpp SGD.cpp DataTensor.cpp ActivationLayer.cpp LossLayer.cpp ConvLayer.cpp Network.cpp DenseLayer.cpp MathFunctions.cpp  Layer.cpp
-CU_SRCS := pooling_layer.cu imgToCol.cu MemManager.cu
+CXX_SRCS := MaxPooling.cpp SGD.cpp DataTensor.cpp ActivationLayer.cpp LossLayer.cpp ConvLayer.cpp Network.cpp DenseLayer.cpp Layer.cpp LayerConfig.cpp
+CU_SRCS := pooling_layer.cu imgToCol.cu MemManager.cu MathFunctions.cu
 
 CXX_OBJS := $(addprefix $(OBJ_DIR)/, ${CXX_SRCS:.cpp=.o})
 
@@ -62,7 +64,7 @@ Cu_OBJS := $(addprefix $(OBJ_DIR)/, ${CU_SRCS:.cu=.o})
 # CXX_OBJS := $(subst $(str) ,$(to) ,$(CU_SRCS))
 # CU_OBJS := $(subst $(str), $(to),$(CXX_SRCS))
 
-OBJS := $(CXX_OBJS) $(Cu_OBJS) main.o
+OBJS :=  $(CXX_OBJS) $(Cu_OBJS) $(OBJ_DIR)/main.o
 
 
 # # Object files:
@@ -76,7 +78,7 @@ OBJS := $(CXX_OBJS) $(Cu_OBJS) main.o
 # h:
 # 	echo $(OBJS)
 $(EXE) : $(OBJS)
-	$(CC) $(CC_FLAGS) $(OBJS) -o $@ $(CUDA_INC_DIR) $(CUDA_LIB_DIR) $(CUDA_LINK_LIBS)
+	$(CC) $(CC_FLAGS) $(OBJS) -o $@ $(CUDA_INC_DIR) $(CUDA_LIB_DIR) $(CUDA_LINK_LIBS) $(CUDA_LIB)
 
 # Compile main .cpp file to object files:
 $(OBJ_DIR)/%.o : %.cpp
