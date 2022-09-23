@@ -60,6 +60,14 @@ namespace DNN_FrameWork{
         const float * cpu_diff();
         float * mutable_gpu_diff();
         float * mutable_cpu_diff();
+        void update();
+        float sumData();
+        float sumDiff();
+        float sumSquareData();
+        float sumSquareDiff();
+        float scaleData(float alpha);
+        float scaleDiff(float alpha);
+
 
     };
 

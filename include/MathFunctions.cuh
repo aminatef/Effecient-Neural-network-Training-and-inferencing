@@ -25,6 +25,7 @@ namespace DNN_FrameWork{
         const float beta,
         float* C);
 
+    //gemv -> C = alpha * op(A)*x +beta *C x is a vector A->dim(M,N)
     void gpu_gemv(const CBLAS_TRANSPOSE transA,
     const int M,const int N,
     const float alpha,const float* A,const float* x,const float beta,
@@ -40,7 +41,9 @@ namespace DNN_FrameWork{
     void gpu_Saxpy(const int N,float alpha,const float* A,float*C);
     void gpu_exp(const int N,const float* A,float*C);
     void gpu_log(const int N,const float* A,float*C);
-
+    void gpu_sum(int N,const float *x,float*y);
+    void gpu_scale(int N,const float *x,float alpha,float*y);
+    void gpu_dot(const int N,const float*x,const float * y,float* output);
     void gpu_rng_gaussian(const int N,const float mu,const float sigma,float* C);
 
 }

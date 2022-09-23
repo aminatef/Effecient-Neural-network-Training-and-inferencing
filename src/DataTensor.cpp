@@ -1,6 +1,7 @@
 #include <vector>
 #include <memory>
 #include "../include/DataTensor.hpp"
+#include"../include/MathFunctions.cuh"
 using std::vector;
 using std::shared_ptr;
 namespace DNN_FrameWork
@@ -158,6 +159,45 @@ namespace DNN_FrameWork
             diff_.reset(new MemManager(size));
         }   
         data_->set_gpu_data(data);
+    }
+
+    void DataTensor::update(){
+        if (this->data_->get_state()==MemManager::IN_GPU)
+        {
+            gpu_Saxpy(this->count,(float)-1,
+            (const float*)this->diff_->gpu_data(),
+            (float*)this->data_->mutable_gpu_data());
+        }
+    }
+    float DataTensor::sumData(){
+        float output;
+        gpu_sum(this->DataCount(),gpu_data(),&output);
+        return output;
+    }
+    float DataTensor::sumDiff(){
+        float output;
+        gpu_sum(this->DataCount(),gpu_diff(),&output);
+        return output;
+    }
+    float DataTensor::sumSquareData(){
+        float output;
+        const float* data = gpu_data();
+        gpu_dot(this->DataCount(),data,data,&output);
+        return output;
+    }
+    float DataTensor::sumSquareDiff(){
+        float output;
+        const float* data = gpu_diff();
+        gpu_dot(this->DataCount(),data,data,&output);
+        return output;
+    }
+    float DataTensor::scaleData(float alpha){
+        const float* data = gpu_data();
+        gpu_scale(this->DataCount(),data,alpha,mutable_gpu_data());
+    }
+    float DataTensor::scaleDiff(float alpha){
+        const float* data = gpu_diff();
+        gpu_scale(this->DataCount(),data,alpha,mutable_gpu_diff());
     }
 
 }

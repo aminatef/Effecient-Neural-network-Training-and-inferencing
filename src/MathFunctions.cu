@@ -2,6 +2,12 @@
 
 namespace DNN_FrameWork
 {
+    cublasHandle_t cublas_handle(){
+        cublasHandle_t handle;
+        cublasStatus_t stat;
+        stat = cublasCreate(&handle);
+        return handle;
+    }
     void gpu_gemm(const CBLAS_TRANSPOSE transA,
         const CBLAS_TRANSPOSE transB,
         const int M,const int N,const int K,
@@ -17,12 +23,9 @@ namespace DNN_FrameWork
         cublasOperation_t opA = (transA==CblasNoTrans) ? CUBLAS_OP_N : CUBLAS_OP_T;
         //MATRIX OPEARATION FOR MATRIX B
         cublasOperation_t opB = (transB==CblasNoTrans) ? CUBLAS_OP_N : CUBLAS_OP_T;
-        //CUBLAS HANDLE
-        cublasHandle_t handle;
-        cublasStatus_t stat;
-        stat = cublasCreate(&handle);
+
         // CUBLAS USES COLUM MAJOR FORMAT SO A AND B ARE REVRSED IN cublasSgemm
-        cublasSgemm(handle,
+        cublasSgemm(cublas_handle(),
                     opB,opA,
                     N,M,K,
                     &alpha,
@@ -39,11 +42,8 @@ namespace DNN_FrameWork
     {
         //MATRIX OPEARATION FOR MATRIX A
         cublasOperation_t opA = (transA==CblasNoTrans) ? CUBLAS_OP_N : CUBLAS_OP_T;
-        //CUBLAS HANDLE
-        cublasHandle_t handle;
-        cublasStatus_t stat;
-        stat = cublasCreate(&handle);
-        cublasSgemv(handle,opA,N,M,&alpha,A,N,x,1,&beta,C,1);
+
+        cublasSgemv(cublas_handle(),opA,N,M,&alpha,A,N,x,1,&beta,C,1);
     }
 
     __global__ void set_kernel(const int N, const float val,float*Y){
@@ -97,10 +97,18 @@ namespace DNN_FrameWork
         curandGenerateNormal(gen,C,N,mu,sigma);
     }
     void gpu_Saxpy(const int N,float alpha,const float* A,float*C){
-        cublasHandle_t handle;
-        cublasStatus_t stat;
-        stat = cublasCreate(&handle);
-        cublasSaxpy(handle,N,&alpha,A,1,C,1);
+        cublasSaxpy(cublas_handle(),N,&alpha,A,1,C,1);
+    }
+
+    void gpu_sum(int N,const float *x,float*y){
+        cublasSasum(cublas_handle(),N,x,1,y);
+    }
+    void gpu_scale(int N,const float *x,float alpha,float*y){
+        cublasScopy(cublas_handle(),N,x,1,y,1);
+        cublasSscal(cublas_handle(),N,&alpha,y,1);
+    }
+    void gpu_dot(const int N,const float*x,const float * y,float* output){
+        cublasSdot(cublas_handle(),N,x,1,y,1,output);
     }
     
 } // namespace DNN_FrameWork

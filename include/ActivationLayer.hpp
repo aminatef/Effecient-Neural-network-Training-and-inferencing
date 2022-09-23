@@ -1,13 +1,16 @@
 #ifndef ACTIVATION_LAYER_HPP
 #define ACTIVATION_LAYER_HPP
+#include"Layer.hpp"
 namespace DNN_FrameWork{
-    class activationLayer
+    class activationLayer:Layer
     {
     private:
         /* data */
     public:
-        activationLayer(/* args */);
-        ~activationLayer();
+        activationLayer(/* args */){
+            
+        }
+        ~activationLayer()
     };
 
 }
